@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Impostor (Secret Word)</title>
+  <link rel="stylesheet" href="imposter.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🕵️</div>
+        <div>
+          <h1>Impostor</h1>
+          <p id="modeSubtitle" class="subtitle">Secret Word + Category</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="btnNewGame" class="btn btn-ghost" type="button">New game</button>
+        <button id="btnReset" class="btn btn-ghost" type="button">Reset</button>
+      </div>
+    </header>
+
+    <nav class="mode-tabs" aria-label="Game mode">
+  <div class="tabs" role="tablist" aria-label="Mode selector">
+    <button id="tabWord" class="tab active" type="button" role="tab" aria-selected="true" data-mode="word">
+      Word game
+    </button>
+    <button id="tabPrompt" class="tab" type="button" role="tab" aria-selected="false" data-mode="prompts">
+      Prompt game
+    </button>
+  </div>
+</nav>
+
+    <main>
+      <!-- SETUP -->
+      <section id="setup" class="panel">
+        <h2>Setup</h2>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="playerCount">Number of players</label>
+            <input id="playerCount" type="number" min="3" max="20" value="3" inputmode="numeric" />
+          </div>
+
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="btnBuildPlayers" class="btn btn-primary" type="button">Create name fields</button>
+            <small class="hint">Then enter player names below</small>
+          </div>
+        </div>
+
+        <div id="playersContainer" class="players"></div>
+
+        <div class="divider"></div>
+
+        <div id="wordSettings">
+  <h3>Word</h3>
+  <div class="grid grid-2">
+    <div class="field">
+      <label for="category">Category</label>
+      <input id="category" type="text" placeholder="e.g., Animals" />
+    </div>
+
+    <div class="field">
+      <label for="secretWord">Secret word</label>
+      <input id="secretWord" type="text" placeholder="e.g., Elephant" />
+    </div>
+  </div>
+
+  <div class="row">
+    <button id="btnRandomWord" class="btn btn-secondary" type="button">Pick random word</button>
+    <span id="randomMeta" class="pill" aria-live="polite"></span>
+  </div>
+</div>
+
+<div id="promptSettings" class="hidden">
+  <h3>Prompts</h3>
+  <div class="grid grid-2">
+    <div class="field">
+      <label for="promptCategory">Category</label>
+      <input id="promptCategory" type="text" placeholder="e.g., Life" />
+    </div>
+    <div class="field">
+      <label for="promptPreview">Selected prompt pair</label>
+      <input id="promptPreview" type="text" placeholder="Click random prompt" disabled />
+    </div>
+  </div>
+
+  <div class="row">
+    <button id="btnRandomPrompt" class="btn btn-secondary" type="button">Pick random prompt</button>
+    <span id="promptMeta" class="pill" aria-live="polite"></span>
+  </div>
+</div>
+
+        <div class="divider"></div>
+
+        <h3>Impostors</h3>
+        <div class="grid grid-2">
+          <div class="field">
+            <label class="radio">
+              <input type="radio" name="impMode" value="exact" checked />
+              <span>Exact impostors</span>
+            </label>
+            <div class="inline">
+              <input id="impExact" type="number" min="1" max="20" value="0" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="radio">
+              <input type="radio" name="impMode" value="range" />
+              <span>Range (hidden count)</span>
+            </label>
+            <div class="inline">
+              <input id="impMin" type="number" min="1" max="20" value="0" inputmode="numeric" />
+              <span class="dash">–</span>
+              <input id="impMax" type="number" min="1" max="20" value="0" inputmode="numeric" />
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row row-space">
+          <div class="tips">
+            <strong>How to play:</strong>
+            <ol>
+              <li>Pass the device around.</li>
+              <li>Each player taps their name, reveals their card, then taps “Got it”.</li>
+              <li>Give one clue each, discuss, then vote.</li>
+            </ol>
+          </div>
+          <div class="start-wrap">
+            <button id="btnStart" class="btn btn-primary btn-lg" type="button">Play</button>
+            <div id="setupError" class="error" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section id="game" class="panel hidden" aria-live="polite">
+        <div class="game-head">
+          <div>
+            <h2>Tap your name</h2>
+            <p class="subtitle">Reveal your role privately, then hand it to the next player.</p>
+            <div id="turnInfo" class="turn-info" aria-live="polite"></div>
+          </div>
+
+          <div class="game-meta">
+            <div class="pill" id="seenCount">0/0 viewed</div>
+            <button id="btnEndSummary" class="btn btn-ghost" type="button" title="Long-press to reveal results">
+              Reveal results
+            </button>
+          </div>
+        </div>
+
+        <div id="namesGrid" class="names-grid" aria-label="Player names"></div>
+
+        <div id="gameNote" class="note hidden">
+          All roles have been viewed. Start the clue round.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-inner">
+      <div class="modal-top">
+        <h2 id="modalTitle">Private Card</h2>
+        <button id="btnCloseModal" class="btn btn-ghost btn-icon" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="card-stage">
+        <button id="flashcard" class="flashcard" type="button" aria-label="Flashcard (tap to flip)">
+          <div class="card-face card-front">
+            <div class="card-front-inner">
+              <div class="big" id="cardPlayerName">Player</div>
+              <div class="muted">Tap to reveal your card</div>
+            </div>
+          </div>
+
+          <div class="card-face card-back">
+            <div class="card-back-inner">
+              <div class="role" id="cardRole">Role</div>
+              <div class="kv">
+                <div class="k">Category</div>
+                <div class="v" id="cardCategory">—</div>
+              </div>
+              <div class="kv" id="wordRow">
+                <div class="k">Secret word</div>
+                <div class="v" id="cardWord">—</div>
+              </div>
+              <div class="kv hidden" id="promptRow">
+                <div class="k">Prompt</div>
+                <div class="v" id="cardPrompt">—</div>
+              </div>
+              <div class="muted small" id="impostorHint">If you are the impostor, blend in using the category.</div>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnGotIt" class="btn btn-primary btn-lg" type="button" disabled>Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resultsTitle">
+    <div class="modal-inner">
+      <div class="modal-top">
+        <h2 id="resultsTitle">Results</h2>
+        <button id="btnCloseResults" class="btn btn-ghost btn-icon" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="results">
+        <div class="results-row">
+          <div class="kv">
+            <div class="k">Category</div>
+            <div class="v" id="resultsCategory">—</div>
+          </div>
+          <div class="kv">
+            <div class="k">Secret word</div>
+            <div class="v" id="resultsWord">—</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="kv">
+          <div class="k">Impostor(s)</div>
+          <div class="v" id="resultsImpostors">—</div>
+        </div>
+        <div class="divider"></div>
+        <div class="muted small">Tip: Use this screen only after voting to avoid spoilers.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="imposter.js"></script>
+</body>
+</html>
