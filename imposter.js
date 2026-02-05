@@ -17,11 +17,18 @@ const WORD_BANK = {
 
 const PROMPT_BANK = {
   Random: [
-    { innocent: "What's the longest you've spent in car?", imposter: "How long do you spend on your phone a day?" },
+    { innocent: "What is the longest you've spent in car?", imposter: "How long do you spend on your phone a day?" },
     { innocent: "What is the youngest age you would date?", imposter: "Pick a number 1-50" },
     { innocent: "What is the most amount of times you've went to the bathroom in a day?", imposter: "How many Thanksgiving plates could you eat before giving up?" },
     { innocent: "How old do you think the average person lives?", imposter: "What is the lowest test score you've gotten?" },
-    { innocent: "What country do you think is the most dirty?", imposter: "Pick a random country"}
+    { innocent: "What country do you think is the most dirty?", imposter: "Pick a random country"},
+    { innocent: "What is the most popular brainrot?", imposter: "Pick a random brainrot"},
+    { innocent: "What is a snack you would get at a deli on the go?", imposter: "What is a snack you would get for a movie?"},
+    { innocent: "What is the most delayed train in NYC?", imposter: "What is your least favorite train in NYC?"},
+    { innocent: "What is your favorite song?", imposter: "What is a song you used to love?"}, 
+    { innocent: "What is something you would do when you're grounded?", imposter: "What is something you would do when you're bored at home?"},
+    { innocent: "What time do you go to sleep on weekdays? (Don't say AM/PM!)", imposter: "What time do you wake up on weekends? (Don't say AM/PM!)"},
+    { innocent: "How many alarms do you set for yourself to wakeup in the morning?", imposter: "How many times have you been late to school so far this year?"}
   ]
 };
 
@@ -266,7 +273,7 @@ function openPlayerModal(playerIndex) {
 
     if (p.isImpostor) {
       $("#impostorHint").classList.remove("hidden");
-      $("#impostorHint").textContent = "Blend in by answering naturally.";
+      $("#impostorHint").textContent = "Answer naturally.";
     } else {
       $("#impostorHint").classList.add("hidden");
     }
@@ -540,6 +547,76 @@ function closeResultsModal() {
   lockBodyScroll(false);
 }
 
+const ADMIN_CODE = "126712";
+const ADMIN_ARM_MS = 8000; 
+let adminArmedUntil = 0;
+let adminBuffer = "";
+
+function armAdmin() {
+  if (!state.started) return; 
+  adminArmedUntil = Date.now() + ADMIN_ARM_MS;
+  adminBuffer = "";
+}
+
+function isAdminArmed() {
+  return Date.now() <= adminArmedUntil;
+}
+
+function openAdminModal() {
+  const modal = $("#adminModal");
+  if (!modal) return;
+
+  const isPromptMode = state.gameMode === "prompts";
+  $("#adminMode").textContent = isPromptMode ? "Prompt game" : "Word game";
+
+  if (!isPromptMode) {
+    $("#adminSecretLabel").textContent = "Secret word";
+    $("#adminSecret").textContent = `${state.category || "—"} • ${state.word || "—"}`;
+  } else {
+    $("#adminSecretLabel").textContent = "Prompts";
+    const innoc = state.promptPair?.innocent || "—";
+    const imp = state.promptPair?.imposter || "—";
+    $("#adminSecret").textContent = `Innocent: ${innoc} | Impostor: ${imp}`;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "admin-list";
+
+  (state.players || []).forEach(p => {
+    const row = document.createElement("div");
+    row.className = "admin-player";
+
+    const name = document.createElement("div");
+    name.textContent = p.name;
+
+    const role = document.createElement("div");
+    if (p.isImpostor) {
+      role.textContent = "IMPOSTOR";
+      role.className = "role-impostor";
+    } else {
+      role.textContent = "INNOCENT";
+      role.className = "role-innocent";
+    }
+
+    row.append(name, role);
+    wrap.appendChild(row);
+  });
+
+  const container = $("#adminPlayers");
+  container.replaceChildren(wrap);
+
+  modal.classList.remove("hidden");
+  lockBodyScroll(true);
+
+  adminArmedUntil = 0;
+  adminBuffer = "";
+}
+
+function closeAdminModal() {
+  $("#adminModal")?.classList.add("hidden");
+  lockBodyScroll(false);
+}
+
 function init() {
   buildPlayerInputs();
   setupImpostorModeUI();
@@ -582,6 +659,30 @@ function init() {
     resetViewedOnly();
   });
 
+  $("#adminHotspot")?.addEventListener("click", armAdmin);
+
+  document.addEventListener("keydown", (e) => {
+    if (!isAdminArmed()) return;
+
+    if (!/^\d$/.test(e.key)) return;
+
+    adminBuffer += e.key;
+
+    if (adminBuffer.length > ADMIN_CODE.length) {
+      adminBuffer = adminBuffer.slice(-ADMIN_CODE.length);
+    }
+
+    if (adminBuffer === ADMIN_CODE) {
+      openAdminModal();
+    }
+  });
+
+  $("#btnCloseAdmin")?.addEventListener("click", closeAdminModal);
+
+  $("#adminModal")?.addEventListener("click", (e) => {
+    if (e.target === $("#adminModal")) closeAdminModal();
+  }); 
+
   $("#btnNewGame").addEventListener("click", () => {
     state.players = [];
     state.category = "";
@@ -610,10 +711,13 @@ if (resultsBtn) {
   $("#btnCloseResults").addEventListener("click", closeResultsModal);
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (!$("#resultsModal").classList.contains("hidden")) closeResultsModal();
-    }
-  });
+  if (e.key !== "Escape") return;
+
+  if (!$("#adminModal").classList.contains("hidden")) {
+    closeAdminModal();
+    return;
+  }
+});
 
   $("#category").addEventListener("input", () => {
   if (state.pendingRandom) {
