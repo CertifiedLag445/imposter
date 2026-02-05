@@ -10,8 +10,9 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true">🕵️</div>
-        <div>
+        <button id="adminHotspot" class="admin-hotspot" type="button" aria-hidden="true" tabindex="-1"></button>
+         <div class="logo" aria-hidden="true">🕵️</div>
+          <div>
           <h1>Impostor</h1>
           <p id="modeSubtitle" class="subtitle">Secret Word + Category</p>
         </div>
@@ -236,6 +237,35 @@
       </div>
     </div>
   </div>
+
+<div id="adminModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+  <div class="modal-inner">
+    <div class="modal-top">
+      <h2 id="adminTitle">Admin Reveal</h2>
+      <button id="btnCloseAdmin" class="btn btn-ghost btn-icon" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="results">
+      <div class="results-row">
+        <div class="kv">
+          <div class="k">Mode</div>
+          <div class="v" id="adminMode">—</div>
+        </div>
+        <div class="kv">
+          <div class="k" id="adminSecretLabel">Secret</div>
+          <div class="v" id="adminSecret">—</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="kv">
+        <div class="k">Players</div>
+        <div class="v" id="adminPlayers"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script src="imposter.js"></script>
 </body>
